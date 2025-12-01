@@ -1,7 +1,9 @@
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Image,
     SafeAreaView,
     StatusBar,
     StyleSheet,
@@ -11,7 +13,6 @@ import {
     View
 } from 'react-native';
 
-import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -62,17 +63,17 @@ export default function HomeScreen() {
                 {/* [항상 표시] 소셜 로그인 버튼들 */}
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity style={[styles.button, styles.googleButton]}>
-                        <Text style={styles.googleIcon}>G</Text>
+                        <Image source={require('../assets/images/google.png')} style={styles.iconImage} resizeMode="contain" />
                         <Text style={styles.googleButtonText}>Google로 계속하기</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={[styles.button, styles.naverButton]}>
-                        <Text style={styles.buttonIcon}>N</Text>
+                        <Image source={require('../assets/images/naver-icon.png')} style={styles.iconImage} resizeMode="contain" />
                         <Text style={styles.whiteText}>네이버로 계속하기</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={[styles.button, styles.kakaoButton]}>
-                        <Text style={styles.buttonIcon}>💬</Text>
+                        <Image source={require('../assets/images/kakaotalk.png')} style={styles.iconImage} resizeMode="contain" />
                         <Text style={styles.kakaoText}>카카오로 계속하기</Text>
                     </TouchableOpacity>
                 </View>
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
     },
     // 네이버 버튼 스타일 (초록색)
     naverButton: {
-        backgroundColor: '#03C75A',
+        backgroundColor: '#00BF19',
     },
     // 카카오 버튼 스타일 (노란색)
     kakaoButton: {
@@ -245,6 +246,13 @@ const styles = StyleSheet.create({
     buttonIcon: {
         fontSize: 16,
         color: '#fff', // 기본 흰색 (카카오는 덮어씌워짐)
+        position: 'absolute',
+        left: 20,
+    },
+    // 아이콘 이미지 스타일
+    iconImage: {
+        width: 24,
+        height: 24,
         position: 'absolute',
         left: 20,
     },
