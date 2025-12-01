@@ -1,146 +1,69 @@
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
     SafeAreaView,
     StatusBar,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
 
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
     const router = useRouter();
-
-    const [isLoginMode, setIsLoginMode] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const API_URL = 'http://192.168.219.100:3000/login';
-
-    const handleLogin = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                Alert.alert('로그인 성공', '환영합니다!!');
-                router.push('/');
-            } else {
-                Alert.alert('로그인 실패', data.message);
-            }
-        } catch (error) {
-            console.error('Login Error:', error);
-            Alert.alert('로그인 실패', '로그인 중 오류가 발생했습니다.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
+        // 전체 화면 컨테이너 (배경색 설정)
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#F0FDFC" />
 
+            {/* 메인 콘텐츠 영역 */}
             <View style={styles.content}>
 
-                {/* [항상 표시] 타이틀: 간편 로그인 */}
+                {/* 타이틀: 간편 로그인 */}
                 <Text style={styles.title}>간편 로그인</Text>
 
-                {/* [항상 표시] 소셜 로그인 버튼들 */}
+                {/* 버튼 컨테이너 */}
                 <View style={styles.buttonContainer}>
+
+                    {/* 구글 로그인 버튼 */}
                     <TouchableOpacity style={[styles.button, styles.googleButton]}>
-                        <Image source={require('../assets/images/google.png')} style={styles.iconImage} resizeMode="contain" />
+                        {/* 구글 아이콘 대신 텍스트 G로 대체 (이미지 사용 시 Image 컴포넌트 교체 가능) */}
+                        <Text style={styles.googleIcon}>G</Text>
                         <Text style={styles.googleButtonText}>Google로 계속하기</Text>
                     </TouchableOpacity>
 
+                    {/* 네이버 로그인 버튼 */}
                     <TouchableOpacity style={[styles.button, styles.naverButton]}>
-                        <Image source={require('../assets/images/naver-icon.png')} style={styles.iconImage} resizeMode="contain" />
+                        <Text style={styles.buttonIcon}>N</Text>
                         <Text style={styles.whiteText}>네이버로 계속하기</Text>
                     </TouchableOpacity>
 
+                    {/* 카카오 로그인 버튼 */}
                     <TouchableOpacity style={[styles.button, styles.kakaoButton]}>
-                        <Image source={require('../assets/images/kakaotalk.png')} style={styles.iconImage} resizeMode="contain" />
+                        <Text style={styles.buttonIcon}>💬</Text>
                         <Text style={styles.kakaoText}>카카오로 계속하기</Text>
                     </TouchableOpacity>
+
                 </View>
 
-                {/* [항상 표시] 구분선 */}
+                {/* 구분선 영역: 또는 */}
                 <View style={styles.dividerContainer}>
                     <View style={styles.dividerLine} />
                     <Text style={styles.dividerText}>또는</Text>
                     <View style={styles.dividerLine} />
                 </View>
 
-                {/* [조건부 렌더링] 이메일 로그인 버튼 vs 입력 폼 */}
-                {isLoginMode ? (
-                    // 1. 로그인 폼 (확장됨)
-                    <View style={styles.loginFormContainer}>
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.label}>이메일</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="example@email.com"
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                            />
-                            <Text style={styles.label}>비밀번호</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="비밀번호"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                            />
-                        </View>
+                {/* 이메일 로그인 버튼 */}
+                <TouchableOpacity style={styles.emailButton}>
+                    <Text style={styles.emailIcon}>✉️</Text>
+                    <Text style={styles.emailText}>이메일로 로그인</Text>
+                </TouchableOpacity>
 
-                        <TouchableOpacity
-                            style={styles.loginButton}
-                            onPress={handleLogin}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={styles.loginButtonText}>로그인</Text>
-                            )}
-                        </TouchableOpacity>
-
-                        {/* 다른 방법으로 로그인 (뒤로가기) */}
-                        <TouchableOpacity onPress={() => setIsLoginMode(false)} style={styles.backButton}>
-                            <Text style={styles.backButtonText}>← 다른 방법으로 로그인</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    // 2. 이메일 로그인 버튼 (기본)
-                    <TouchableOpacity
-                        style={styles.emailButton}
-                        onPress={() => setIsLoginMode(true)}
-                    >
-                        <Text style={styles.emailIcon}>✉️</Text>
-                        <Text style={styles.emailText}>이메일로 로그인</Text>
-                    </TouchableOpacity>
-                )}
-
-                {/* [항상 표시] 회원가입 링크 */}
+                {/* 회원가입 링크 영역 */}
                 <View style={styles.signupContainer}>
                     <Text style={styles.signupLabel}>아직 계정이 없으신가요? </Text>
-                    <TouchableOpacity onPress={() => router.push('./signup')}>
+                    <TouchableOpacity>
                         <Text style={styles.signupLink}>회원가입</Text>
                     </TouchableOpacity>
                 </View>
@@ -224,7 +147,7 @@ const styles = StyleSheet.create({
     },
     // 네이버 버튼 스타일 (초록색)
     naverButton: {
-        backgroundColor: '#00BF19',
+        backgroundColor: '#03C75A',
     },
     // 카카오 버튼 스타일 (노란색)
     kakaoButton: {
@@ -246,13 +169,6 @@ const styles = StyleSheet.create({
     buttonIcon: {
         fontSize: 16,
         color: '#fff', // 기본 흰색 (카카오는 덮어씌워짐)
-        position: 'absolute',
-        left: 20,
-    },
-    // 아이콘 이미지 스타일
-    iconImage: {
-        width: 24,
-        height: 24,
         position: 'absolute',
         left: 20,
     },
@@ -305,57 +221,5 @@ const styles = StyleSheet.create({
         color: '#0F766E', // 짙은 청록색
         fontSize: 14,
         fontWeight: '600',
-    },
-    // 로그인 확장 시 추가된 폼
-    loginFormContainer: {
-        width: '100%',
-        alignItems: 'center'
-    },
-
-    backButton: {
-        alignSelf: 'flex-start',
-        marginBottom: 20,
-        padding: 5
-    },
-
-    backButtonText: {
-        color: '#64748B',
-        fontSize: 14
-    },
-
-    inputContainer: {
-        width: '100%',
-        marginBottom: 20
-    },
-
-    input: {
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
-        borderRadius: 12,
-        padding: 15,
-        marginBottom: 10,
-        fontSize: 16
-    },
-
-    loginButton: {
-        backgroundColor: '#009688',
-        width: '100%',
-        padding: 15,
-        borderRadius: 12,
-        alignItems: 'center'
-    },
-
-    loginButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold'
-    },
-    label: {
-        fontSize: 14,
-        color: '#64748B',
-        marginBottom: 8,
-        fontWeight: '500',
-        alignSelf: 'flex-start'
     },
 });
