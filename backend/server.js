@@ -20,11 +20,11 @@ const pool = new Pool({
 });
 
 app.post('/signup', async (req, res) => {
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
     try {
         const result = await pool.query(
-            'INSERT INTO users (email , password) VALUES ($1 , $2) RETURNING id , email',
-            [email, password]
+            'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, email',
+            [name, email, password]
         );
         res.json({ success: true, user: result.rows[0] });
     } catch (error) {
