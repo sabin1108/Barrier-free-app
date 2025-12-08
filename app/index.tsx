@@ -1,361 +1,207 @@
+import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+import { INITIAL_PROFILE } from '@/constants/Data';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
 
+import { ContactInfo } from '@/components/home/ContactInfo';
+import { EditProfileModal } from '@/components/home/EditProfileModal';
+import { ProfileHeader } from '@/components/home/ProfileHeader';
+import { SkillList } from '@/components/home/SkillList';
+import { StatsRow } from '@/components/home/StatsRow';
+import { ProfileStorage } from '@/services/ProfileStorage';
+import { ProfileData } from '@/types/Profile';
 
-export default function HomeScreen() {
+const { width } = Dimensions.get('window');
+
+export default function PortfolioScreen() {
     const router = useRouter();
+    const [profile, setProfile] = React.useState<ProfileData>(INITIAL_PROFILE);
+    const [isEditModalVisible, setIsEditModalVisible] = React.useState(false);
 
-    const [isLoginMode, setIsLoginMode] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const API_URL = 'http://192.168.219.100:3000/login';
-
-    const handleLogin = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                Alert.alert('로그인 성공', '환영합니다!!');
-                router.push('/');
+    // 차후 INITIAL_PROFILE 제거 예정, 일단 타입 유지를 위해 초기값 사용
+    // 앱 시작 시 로컬 데이터 로드
+    React.useEffect(() => {
+        const loadData = async () => {
+            const storedProfile = await ProfileStorage.loadProfile();
+            if (storedProfile) {
+                setProfile(storedProfile);
             } else {
-                Alert.alert('로그인 실패', data.message);
+                // 저장된 프로필이 없으면 생성 페이지로 이동
+                router.replace('/create-profile');
             }
-        } catch (error) {
-            console.error('Login Error:', error);
-            Alert.alert('로그인 실패', '로그인 중 오류가 발생했습니다.');
-        } finally {
-            setLoading(false);
-        }
+        };
+        loadData();
+    }, []);
+
+    const handleSaveProfile = async (newData: Partial<ProfileData>) => {
+        const updatedProfile = {
+            ...profile,
+            ...newData,
+            contacts: {
+                ...profile.contacts,
+                ...(newData.contacts || {})
+            }
+        };
+
+        setProfile(updatedProfile);
+        await ProfileStorage.saveProfile(updatedProfile);
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#F0FDFC" />
 
-            <View style={styles.content}>
-
-                {/* [항상 표시] 타이틀: 간편 로그인 */}
-                <Text style={styles.title}>간편 로그인</Text>
-
-                {/* [항상 표시] 소셜 로그인 버튼들 */}
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={[styles.button, styles.googleButton]}>
-                        <Image source={require('../assets/images/google.png')} style={styles.iconImage} resizeMode="contain" />
-                        <Text style={styles.googleButtonText}>Google로 계속하기</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.button, styles.naverButton]}>
-                        <Image source={require('../assets/images/naver-icon.png')} style={styles.iconImage} resizeMode="contain" />
-                        <Text style={styles.whiteText}>네이버로 계속하기</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.button, styles.kakaoButton]}>
-                        <Image source={require('../assets/images/kakaotalk.png')} style={styles.iconImage} resizeMode="contain" />
-                        <Text style={styles.kakaoText}>카카오로 계속하기</Text>
-                    </TouchableOpacity>
+            {/* Header (앱 상단 네비게이션) */}
+            <View style={styles.header}>
+                <View style={styles.logoContainer}>
+                    <Feather name="briefcase" size={24} color="#008080" />
+                    <Text style={styles.logoText}>Portfolio</Text>
                 </View>
-
-                {/* [항상 표시] 구분선 */}
-                <View style={styles.dividerContainer}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>또는</Text>
-                    <View style={styles.dividerLine} />
-                </View>
-
-                {/* [조건부 렌더링] 이메일 로그인 버튼 vs 입력 폼 */}
-                {isLoginMode ? (
-                    // 1. 로그인 폼 (확장됨)
-                    <View style={styles.loginFormContainer}>
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.label}>이메일</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="example@email.com"
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                            />
-                            <Text style={styles.label}>비밀번호</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="비밀번호"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            style={styles.loginButton}
-                            onPress={handleLogin}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={styles.loginButtonText}>로그인</Text>
-                            )}
-                        </TouchableOpacity>
-
-                        {/* 다른 방법으로 로그인 (뒤로가기) */}
-                        <TouchableOpacity onPress={() => setIsLoginMode(false)} style={styles.backButton}>
-                            <Text style={styles.backButtonText}>← 다른 방법으로 로그인</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    // 2. 이메일 로그인 버튼 (기본)
-                    <TouchableOpacity
-                        style={styles.emailButton}
-                        onPress={() => setIsLoginMode(true)}
-                    >
-                        <Text style={styles.emailIcon}>✉️</Text>
-                        <Text style={styles.emailText}>이메일로 로그인</Text>
+                <View style={styles.headerIcons}>
+                    <TouchableOpacity style={styles.iconButton} onPress={() => setIsEditModalVisible(true)}>
+                        <Feather name="edit-2" size={20} color="#475569" />
                     </TouchableOpacity>
-                )}
-
-                {/* [항상 표시] 회원가입 링크 */}
-                <View style={styles.signupContainer}>
-                    <Text style={styles.signupLabel}>아직 계정이 없으신가요? </Text>
-                    <TouchableOpacity onPress={() => router.push('./signup')}>
-                        <Text style={styles.signupLink}>회원가입</Text>
+                    <TouchableOpacity style={styles.iconButton} onPress={() => router.push('./profile')}>
+                        <Feather name="user" size={20} color="#475569" />
                     </TouchableOpacity>
+                    <TouchableOpacity style={styles.iconButton}><Feather name="share-2" size={20} color="#475569" /></TouchableOpacity>
+                    <TouchableOpacity style={styles.iconButton}><Feather name="moon" size={20} color="#475569" /></TouchableOpacity>
+                    <TouchableOpacity style={styles.iconButton} onPress={() => router.push('./login')}><Feather name="log-out" size={20} color="#475569" /></TouchableOpacity>
                 </View>
-
             </View>
+
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.card}>
+                    <LinearGradient
+                        colors={['#009688', '#00695C']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.cardHeaderGradient}
+                    />
+
+                    <View style={styles.avatarWrapper}>
+                        <View style={styles.avatarContainer}>
+                            <View style={styles.avatarPlaceholder} />
+                        </View>
+                    </View>
+
+                    {/* Profile Content */}
+                    <View style={styles.cardContent}>
+
+                        {/* 1. 프로필 헤더 */}
+                        <ProfileHeader
+                            name={profile.name}
+                            role={profile.role}
+                            description={profile.description}
+                        />
+
+                        {/* 2. 통계 */}
+                        <StatsRow stats={profile.stats} />
+
+                        {/* 3. 스킬 리스트 */}
+                        <SkillList skills={profile.skills} />
+
+                        {/* 간격 띄우기 */}
+                        <View style={{ height: 30 }} />
+
+                        {/* 4. 연락처 정보 */}
+                        <ContactInfo contacts={profile.contacts} />
+
+                    </View>
+                </View>
+            </ScrollView>
+
+            <EditProfileModal
+                visible={isEditModalVisible}
+                onClose={() => setIsEditModalVisible(false)}
+                onSave={handleSaveProfile}
+                initialData={profile}
+            />
         </SafeAreaView>
     );
 }
 
-// 스타일 정의
 const styles = StyleSheet.create({
-    // 전체 화면 스타일
     container: {
         flex: 1,
-        backgroundColor: '#F0FDFC', // 연한 민트/하늘색 배경
+        backgroundColor: '#F0FDFC',
     },
-    // 헤더 스타일 (아이콘 배치)
     header: {
-        padding: 20,
-        alignItems: 'flex-end', // 오른쪽 정렬
-    },
-    // 아이콘 텍스트 스타일
-    iconText: {
-        fontSize: 24,
-        color: '#009688', // 청록색 계열
-    },
-    // 메인 콘텐츠 정렬
-    content: {
-        flex: 1,
-        paddingHorizontal: 30,
-        justifyContent: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: -50, // 시각적 중심 보정
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        backgroundColor: '#F0FDFC',
     },
-    // 타이틀 텍스트 스타일
-    title: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 40,
-    },
-    // 버튼들을 감싸는 컨테이너
-    buttonContainer: {
-        width: '100%',
-        gap: 12, // 버튼 사이 간격
-    },
-    // 공통 버튼 스타일
-    button: {
+    logoContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 14,
-        borderRadius: 12,
+        gap: 8,
+    },
+    logoText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1E293B',
+    },
+    headerIcons: {
+        flexDirection: 'row',
+        gap: 15,
+    },
+    iconButton: {
+        padding: 4,
+    },
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+        alignItems: 'center',
+    },
+    card: {
         width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        overflow: 'visible',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 12,
+        elevation: 5,
+        marginTop: 20,
         position: 'relative',
     },
-    // 구글 버튼 스타일 (흰색 + 그림자)
-    googleButton: {
+    cardHeaderGradient: {
+        height: 120,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+    },
+    avatarWrapper: {
+        position: 'absolute',
+        top: 60,
+        left: 30,
+    },
+    avatarContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 20,
         backgroundColor: '#FFFFFF',
-        // 그림자 효과 (iOS)
+        padding: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        // 그림자 효과 (Android)
         elevation: 3,
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
     },
-    googleButtonText: {
-        fontSize: 16,
-        color: '#333',
-        fontWeight: '500',
-    },
-    googleIcon: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#4285F4',
-        position: 'absolute',
-        left: 20,
-    },
-    // 네이버 버튼 스타일 (초록색)
-    naverButton: {
-        backgroundColor: '#00BF19',
-    },
-    // 카카오 버튼 스타일 (노란색)
-    kakaoButton: {
-        backgroundColor: '#FEE500',
-    },
-    // 흰색 텍스트 (네이버 버튼용)
-    whiteText: {
-        fontSize: 16,
-        color: '#FFFFFF',
-        fontWeight: '600',
-    },
-    // 카카오 텍스트 (검정색)
-    kakaoText: {
-        fontSize: 16,
-        color: '#000000',
-        fontWeight: '600',
-    },
-    // 버튼 내부 아이콘 위치
-    buttonIcon: {
-        fontSize: 16,
-        color: '#fff', // 기본 흰색 (카카오는 덮어씌워짐)
-        position: 'absolute',
-        left: 20,
-    },
-    // 아이콘 이미지 스타일
-    iconImage: {
-        width: 24,
-        height: 24,
-        position: 'absolute',
-        left: 20,
-    },
-    // 구분선 컨테이너
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '100%',
-        marginVertical: 30,
-    },
-    // 구분선 라인
-    dividerLine: {
+    avatarPlaceholder: {
         flex: 1,
-        height: 1,
-        backgroundColor: '#E2E8F0',
-        // backgroundColor: '#000', // 디버깅용
+        backgroundColor: '#F1F5F9',
+        borderRadius: 16,
     },
-    // 구분선 텍스트
-    dividerText: {
-        marginHorizontal: 10,
-        color: '#94A3B8',
-        fontSize: 14,
-    },
-    // 이메일 로그인 버튼 (투명 배경)
-    emailButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 30,
-    },
-    emailIcon: {
-        fontSize: 18,
-        marginRight: 8,
-        color: '#64748B',
-    },
-    emailText: {
-        fontSize: 16,
-        color: '#64748B',
-        fontWeight: '500',
-    },
-    // 회원가입 컨테이너
-    signupContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    signupLabel: {
-        color: '#64748B',
-        fontSize: 14,
-    },
-    signupLink: {
-        color: '#0F766E', // 짙은 청록색
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    // 로그인 확장 시 추가된 폼
-    loginFormContainer: {
-        width: '100%',
-        alignItems: 'center'
-    },
-
-    backButton: {
-        alignSelf: 'flex-start',
-        marginBottom: 20,
-        padding: 5
-    },
-
-    backButtonText: {
-        color: '#64748B',
-        fontSize: 14
-    },
-
-    inputContainer: {
-        width: '100%',
-        marginBottom: 20
-    },
-
-    input: {
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
-        borderRadius: 12,
-        padding: 15,
-        marginBottom: 10,
-        fontSize: 16
-    },
-
-    loginButton: {
-        backgroundColor: '#009688',
-        width: '100%',
-        padding: 15,
-        borderRadius: 12,
-        alignItems: 'center'
-    },
-
-    loginButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold'
-    },
-    label: {
-        fontSize: 14,
-        color: '#64748B',
-        marginBottom: 8,
-        fontWeight: '500',
-        alignSelf: 'flex-start'
+    cardContent: {
+        marginTop: 50,
+        paddingHorizontal: 30,
+        paddingBottom: 40,
     },
 });
