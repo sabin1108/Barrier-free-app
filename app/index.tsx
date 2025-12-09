@@ -31,35 +31,31 @@ export default function PortfolioScreen() {
     const [profile, setProfile] = React.useState<ProfileData>(EMPTY_PROFILE);
     const [isEditModalVisible, setIsEditModalVisible] = React.useState(false);
 
-    // 차후 INITIAL_PROFILE 제거 예정, 일단 타입 유지를 위해 초기값 사용
     // 앱 시작 시 로컬 데이터 로드
     React.useEffect(() => {
-        const loadData = async () => {
-            const storedProfile = await ProfileStorage.loadProfile();
-            if (storedProfile) {
-                setProfile(storedProfile);
-            } else {
-                // 저장된 프로필이 없으면 생성 페이지로 이동
-                router.replace('/create-profile');
-            }
-        };
-        loadData();
+        // 초기값(빈 프로필)일 때는 저장 안 한도록 변경
+        if (profile.name !== "이름 없음") {
+            ProfileStorage.saveProfile(profile);
+        }
+    }, [profile]); // profile이 바뀔 때마다 실행 
+
+    // 기존 코드에서 상태 업데이트만 사용하게 변경
+    const handleSaveProfile = React.useCallback((newData: Partial<ProfileData>) => {
+        setProfile(prev => ({
+            ...prev,
+            ...newData,
+            contacts: { ...prev.contacts, ...newData.contacts }
+        }));
     }, []);
 
-    const handleSaveProfile = React.useCallback(async (newData: Partial<ProfileData>) => {
-        setProfile(prev => {
-            const updatedProfile = {
-                ...prev,
-                ...newData,
-                contacts: {
-                    ...prev.contacts,
-                    ...(newData.contacts || {})
-                }
-            };
-            ProfileStorage.saveProfile(updatedProfile);// 저장 로직 내부에서 처리 리랜더링 최소화
-            return updatedProfile;
-        });
+    // 프로필 편집에서 필요없이 다시 그려지는 방식을 수정하기 위한 코드
+    const handleOpenEditModal = React.useCallback(() => {
+        setIsEditModalVisible(true);
     }, []);
+
+    const handleNavigateToProfile = React.useCallback(() => {
+        router.push('./profile');
+    }, [router]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -72,10 +68,11 @@ export default function PortfolioScreen() {
                     <Text style={styles.logoText}>Portfolio</Text>
                 </View>
                 <View style={styles.headerIcons}>
-                    <TouchableOpacity style={styles.iconButton} onPress={() => setIsEditModalVisible(true)}>
+                    {/*버튼을 누를때 StatsRow, SkillList 등의 내용을 다시 그리지 않게 하기 위한 코드로 수정*/}
+                    <TouchableOpacity style={styles.iconButton} onPress={handleOpenEditModal}>
                         <Feather name="edit-2" size={20} color="#475569" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconButton} onPress={() => router.push('./profile')}>
+                    <TouchableOpacity style={styles.iconButton} onPress={handleNavigateToProfile}>
                         <Feather name="user" size={20} color="#475569" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton}><Feather name="share-2" size={20} color="#475569" /></TouchableOpacity>
