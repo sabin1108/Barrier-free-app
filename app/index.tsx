@@ -46,19 +46,20 @@ export default function PortfolioScreen() {
         loadData();
     }, []);
 
-    const handleSaveProfile = async (newData: Partial<ProfileData>) => {
-        const updatedProfile = {
-            ...profile,
-            ...newData,
-            contacts: {
-                ...profile.contacts,
-                ...(newData.contacts || {})
-            }
-        };
-
-        setProfile(updatedProfile);
-        await ProfileStorage.saveProfile(updatedProfile);
-    };
+    const handleSaveProfile = React.useCallback(async (newData: Partial<ProfileData>) => {
+        setProfile(prev => {
+            const updatedProfile = {
+                ...prev,
+                ...newData,
+                contacts: {
+                    ...prev.contacts,
+                    ...(newData.contacts || {})
+                }
+            };
+            ProfileStorage.saveProfile(updatedProfile);// 저장 로직 내부에서 처리 리랜더링 최소화
+            return updatedProfile;
+        });
+    }, []);
 
     return (
         <SafeAreaView style={styles.container}>

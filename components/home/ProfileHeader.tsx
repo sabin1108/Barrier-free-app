@@ -1,10 +1,6 @@
+import { ProfileData } from '@/types/Profile';
 import { StyleSheet, Text, View } from 'react-native';
-
-interface ProfileHeaderProps {
-    name: string;
-    role: string;
-    description: string;
-}
+type ProfileHeaderProps = Pick<ProfileData, 'name' | 'role' | 'description'>;
 
 export function ProfileHeader({ name, role, description }: ProfileHeaderProps) {
     return (
