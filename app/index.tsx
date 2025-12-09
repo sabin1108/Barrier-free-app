@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { INITIAL_PROFILE } from '@/constants/Data';
 import { useRouter } from 'expo-router';
 
 import { ContactInfo } from '@/components/home/ContactInfo';
@@ -16,9 +15,20 @@ import { ProfileData } from '@/types/Profile';
 
 const { width } = Dimensions.get('window');
 
+// 빈 프로필 초기값 (Data.ts 삭제 대응)
+const EMPTY_PROFILE: ProfileData = {
+    name: "이름 없음",
+    role: "직업 없음",
+    description: "소개를 입력해주세요.",
+    stats: { projects: 0, likes: 0, experience: "0년" },
+    contacts: { email: "", phone: "", location: "" },
+    skills: [],
+    socials: []
+};
+
 export default function PortfolioScreen() {
     const router = useRouter();
-    const [profile, setProfile] = React.useState<ProfileData>(INITIAL_PROFILE);
+    const [profile, setProfile] = React.useState<ProfileData>(EMPTY_PROFILE);
     const [isEditModalVisible, setIsEditModalVisible] = React.useState(false);
 
     // 차후 INITIAL_PROFILE 제거 예정, 일단 타입 유지를 위해 초기값 사용
